@@ -1,0 +1,6 @@
+@AI_Tool_Management_HostAddress = http://localhost:5245
+
+GET {{AI_Tool_Management_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

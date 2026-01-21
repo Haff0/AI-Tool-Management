@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36310.24 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI-Tool-Management", "AI-Tool-Management.csproj", "{4E10876F-7110-4F42-B718-8C35C673A610}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectAI", "..\ConnectAI\ConnectAI.csproj", "{2A6511C4-AA1A-D553-3B7C-E19986212358}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E10876F-7110-4F42-B718-8C35C673A610}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E10876F-7110-4F42-B718-8C35C673A610}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E10876F-7110-4F42-B718-8C35C673A610}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E10876F-7110-4F42-B718-8C35C673A610}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A6511C4-AA1A-D553-3B7C-E19986212358}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A6511C4-AA1A-D553-3B7C-E19986212358}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A6511C4-AA1A-D553-3B7C-E19986212358}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A6511C4-AA1A-D553-3B7C-E19986212358}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {76519285-8726-49B3-B2E9-B91E4776398E}
+	EndGlobalSection
+EndGlobal
