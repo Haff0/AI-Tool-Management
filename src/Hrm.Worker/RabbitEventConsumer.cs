@@ -1,15 +1,23 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Shared.Contracts;
-using Shared.Observability;
 using System.Text;
 using System.Text.Json;
+using Hrm.Contracts.Events;
+using Hrm.Application.Abstractions;
+using Hrm.Worker.Agents;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Hrm.Worker.Consumers;
 
 public sealed class RabbitEventConsumer : BackgroundService
 {
     private readonly ILogger<RabbitEventConsumer> _logger;
     private readonly IConfiguration _config;
     private readonly RabbitConnectionFactory _factory;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     private IConnection? _conn;
     private IChannel? _ch;
@@ -18,11 +26,13 @@ public sealed class RabbitEventConsumer : BackgroundService
     public RabbitEventConsumer(
         ILogger<RabbitEventConsumer> logger,
         IConfiguration config,
-        RabbitConnectionFactory factory)
+        RabbitConnectionFactory factory,
+        IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _config = config;
         _factory = factory;
+        _scopeFactory = scopeFactory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,14 +59,12 @@ public sealed class RabbitEventConsumer : BackgroundService
             "Rabbit consumer started. exchange={Exchange} queue={Queue} key={Key}",
             exchange, queue, routingKey);
 
-        // Quan trọng: giữ BackgroundService sống cho đến khi bị stop
         try
         {
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
         catch (OperationCanceledException)
         {
-            // expected when stoppingToken is cancelled
         }
     }
 
@@ -66,27 +74,46 @@ public sealed class RabbitEventConsumer : BackgroundService
         {
             var json = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-            // Example: WorkRequestCreated event
-            // If your routing key includes multiple events, switch by ea.RoutingKey
-            var evt = JsonSerializer.Deserialize<WorkRequestCreated>(json, new JsonSerializerOptions
+            var evt = JsonSerializer.Deserialize<WorkRequestCreatedEvent>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
 
-            var correlationId = Correlation.Ensure(evt?.CorrelationId);
+            if (evt != null)
+            {
+                _logger.LogInformation("Received WorkRequestCreatedEvent. WorkRequestId={Id} CorrelationId={CorrelationId}", 
+                    evt.WorkRequestId, evt.CorrelationId);
 
-            _logger.LogInformation("Received WorkRequestCreated. id={Id} correlationId={CorrelationId}", evt?.WorkRequestId, correlationId);
+                using var scope = _scopeFactory.CreateScope();
+                var repo = scope.ServiceProvider.GetRequiredService<IWorkRepository>();
+                var planner = scope.ServiceProvider.GetRequiredService<IPlannerAgent>();
+                var manager = scope.ServiceProvider.GetRequiredService<IManagerAgent>();
 
-            // TODO: call planner -> manager -> executor pipeline
-            await Task.Delay(10);
+                var request = await repo.GetAsync(evt.WorkRequestId, CancellationToken.None);
+                if (request != null)
+                {
+                    _logger.LogInformation("Planning WorkRequest {Id}...", request.Id);
+                    var plan = await planner.CreatePlanAsync(request, CancellationToken.None);
+                    
+                    _logger.LogInformation("Executing Plan for {Id}...", request.Id);
+                    await manager.ExecutePlanAsync(request, plan, CancellationToken.None);
+                    
+                    _logger.LogInformation("Finished WorkRequest {Id}", request.Id);
+                }
+                else
+                {
+                    _logger.LogWarning("WorkRequest {Id} not found in database.", evt.WorkRequestId);
+                }
+            }
 
-            _ch?.BasicAckAsync(ea.DeliveryTag, multiple: false);
+            if (_ch != null)
+                await _ch.BasicAckAsync(ea.DeliveryTag, multiple: false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to handle message. routingKey={Key}", ea.RoutingKey);
-            // Requeue=true for transient errors
-            _ch?.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
+            if (_ch != null)
+                await _ch.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
         }
     }
 
