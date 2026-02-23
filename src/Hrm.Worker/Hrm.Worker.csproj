@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hrm.Application\Hrm.Application.csproj" />
+    <ProjectReference Include="..\Hrm.Infrastructure\Hrm.Infrastructure.csproj" />
+    <ProjectReference Include="..\Hrm.Contracts\Hrm.Contracts.csproj" />
+    <ProjectReference Include="..\Hrm.Domain\Hrm.Domain.csproj" />
+    <ProjectReference Include="..\..\..\ConnectAI\ConnectAI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
