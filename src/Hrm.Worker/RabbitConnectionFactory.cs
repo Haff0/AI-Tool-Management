@@ -2,7 +2,7 @@ using RabbitMQ.Client;
 
 public sealed class RabbitConnectionFactory
 {
-    public async Task<IConnection> CreateConnection(IConfiguration config)
+    public IConnection CreateConnection(IConfiguration config)
     {
         var host = config["Rabbit:Host"] ?? "rabbitmq";
         var user = config["Rabbit:User"] ?? "guest";
@@ -15,9 +15,9 @@ public sealed class RabbitConnectionFactory
             UserName = user,
             Password = pass,
             VirtualHost = vhost,
-            //DispatchConsumersAsync = true
+            DispatchConsumersAsync = true
         };
 
-        return await factory.CreateConnectionAsync("hrm-worker");
+        return factory.CreateConnection("hrm-worker");
     }
 }
