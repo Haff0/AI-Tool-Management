@@ -37,7 +37,7 @@ public sealed class RabbitEventConsumer : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _conn = await _factory.CreateConnection(_config);
+        _conn = _factory.CreateConnection(_config);
         _ch = await _conn.CreateChannelAsync();
 
         var exchange = _config["Rabbit:Exchange"] ?? "hrm.events";
