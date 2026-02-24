@@ -1,6 +1,8 @@
 using Hrm.Application.Abstractions;
 using Hrm.Contracts.Events;
 using Hrm.Domain.Tasks;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Hrm.Application.Features.WorkRequests.CreateWorkRequest;
 
@@ -8,15 +10,25 @@ public sealed class CreateWorkRequestHandler
 {
     private readonly IWorkRepository _repo;
     private readonly IEventBus _bus;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CreateWorkRequestHandler(IWorkRepository repo, IEventBus bus)
+    public CreateWorkRequestHandler(IWorkRepository repo, IEventBus bus, IHttpContextAccessor httpContextAccessor)
     {
         _repo = repo;
         _bus = bus;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Guid> HandleAsync(CreateWorkRequestCommand cmd, string correlationId, CancellationToken ct)
     {
+        var user = _httpContextAccessor.HttpContext?.User;
+        var roleLevel = user?.FindFirst("RoleLevel")?.Value;
+
+        if (roleLevel != "Level2_Manager")
+        {
+            throw new UnauthorizedAccessException("Forbidden: Only Level 2 Managers can create Work Requests.");
+        }
+
         var id = Guid.NewGuid();
         var entity = new WorkRequest(id, cmd.Title, cmd.Description);
         
